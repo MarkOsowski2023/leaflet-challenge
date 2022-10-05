@@ -33,7 +33,7 @@ function createMarkers(response) {
     for (var i = 0; i < earthquakes; i++) {
         var earthquake = earthquakes[i];
 
-        var earthquakeMarker = L.marker([earthquake.mag]).bindPopup("<h3>" + earthquake.mag + "</h3>");
+        var earthquakeMarker = L.marker([earthquake.geometry.type[0]]).bindPopup("<h3>" + earthquake.geometry.type[0] + "</h3>");
 
         earthquakeMarkers.push(earthquakeMarker);
     }
