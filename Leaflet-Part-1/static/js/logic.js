@@ -20,11 +20,12 @@ d3.json(url).then(({features}) => {
   features.forEach(feature => {
     let { coordinates } = feature.geometry;
     let { mag, place } = feature.properties;
-
+//  fill opacity by depth
     L.circle([coordinates[1], coordinates[0]], {radius: mag*12000, color: 'black', fillColor: chooseColor(feature.properties.mag), fillOpacity: coordinates[2]}).addTo(map)
   })
 });
 
+//  function for color by magnitude of earthquake
 function chooseColor(mag) {
   if (mag >= 0 & mag <= 1) return "green";
   else if (mag > 1 & mag <= 3) return "yellow";
