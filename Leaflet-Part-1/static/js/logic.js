@@ -1,96 +1,36 @@
-function createMap(earthquakeMap) {
+var map = L.map('map').setView([37.7749, -122.4194], 13);
 
-    var streetmap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    });
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
 
-    var baseMap = {
-        "Street Map": streetmap
-    };
 
-    var overlayMaps = {
-        "Earthquake Maps": earthquakeMap
-    };
 
-    var map = L.map("map", {
-        center: [37.7749, -122.4194],
-        zoom: 5,
-        layers: [streetmap, earthquakeMap]
-    });
-
-    L.control.layers(baseMap, overlayMaps, {
-        collapsed: false
-      }).addTo(map);
-      legend.addTo(map);
-
-}
 // Features
 
+//  geojson url for earquake data
 var url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
 
-d3.json(url, function(data) {
-  createFeatures(data.features);
+// Empty Geojson layer
+// var myLayer = L.geoJSON().addTo(map);
+// // myLayer.addData(geojsonFeature);
+
+// data for geojson layer
+d3.json(url).then(({features}) => {
+  features.forEach(feature => {
+    let { coordinates } = feature.geometry;
+    let { mag, place } = feature.properties;
+
+    L.circle([coordinates[1], coordinates[0]], {radius: mag*12000, color: 'black', fillColor: chooseColor(feature.properties.mag), fillOpacity: coordinates[2]}).addTo(map)
+  })
 });
 
-function createFeatures(earthquakeData) {
-  // Give each feature a popup describing the place and time of the earthquake
-  function onEachFeature(feature, layer) {
-    layer.bindPopup("<h3> Where: " + feature.properties.place +
-      "</h3><hr><p>" + new Date(feature.properties.time) + "</p>" + "<br><h2> Magnitude: " + feature.properties.mag + "</h2>");
-  }
-
-  // Create a GeoJSON layer containing the features array on the earthquakeData object
-  function createCircleMarker(feature,latlng){
-    let options = {
-        radius:feature.properties.mag*5,
-        fillColor: chooseColor(feature.properties.mag),
-        color: chooseColor(feature.properties.mag),
-        weight: 1,
-        opacity: .8,
-        fillOpacity: 0.35
-    }
-    return L.circleMarker(latlng, options);
-}
-  
-  let earthquakes = L.geoJSON(earthquakeData, {
-    onEachFeature: onEachFeature,
-    pointToLayer: createCircleMarker
-  });
-  
-  // Send earthquakes layer to the createMap function
-  createMap(earthquakes);
-}
-
-// Color circles based on mag
 function chooseColor(mag) {
-  switch(true) {
-      case (1.0 <= mag && mag <= 2.5):
-        return "#0071BC";
-      case (2.5 <= mag && mag <= 4.0):
-        return "#35BC00";
-      case (4.0 <= mag && mag <= 5.5):
-        return "#BCBC00";
-      case (5.5 <= mag && mag <= 8.0):
-        return "#BC3500";
-      case (8.0 <= mag && mag <= 20.0):
-        return "#BC0000";
-      default:
-        return "#E2FFAE";
-  }
+  if (mag >= 0 & mag <= 1) return "green";
+  else if (mag > 1 & mag <= 3) return "yellow";
+  else if (mag > 3 & mag <= 5) return "orange";
+  else if (mag > 5 & mag <= 7) return "darkorange";
+  else if (mag > 7 & mag <= 9.5) return "red";
+  else return "lightgreen";
 }
 
-let legend = L.control({position: 'bottomright'});
-
-legend.onAdd = function (map) {
-    let div = L.DomUtil.create('div', 'info legend'),
-        grades = [1.0, 2.5, 4.0, 5.5, 8.0],
-        labels = [];
-
-    // loop through density intervals
-    for (let i = 0; i < grades.length; i++) {
-        div.innerHTML +=
-            '<i style="background:' + chooseColor(grades[i] + 1) + '"></i> ' +
-            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
-    }
-    return div;
-};
